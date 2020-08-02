@@ -1,11 +1,17 @@
 package com.example.backstraightener
 
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.text.InputType
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.NumberPicker
+import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import java.text.DecimalFormat
 
@@ -22,6 +28,9 @@ class MainActivity : AppCompatActivity() {
     internal val hoursArray = Array(MAX_HOUR) {i -> dec.format(i)}
     internal val minuteArray = Array(MAX_MINUTE) {i -> dec.format(i)}
     internal val secondArray = Array(MAX_SECOND) {i -> dec.format(i)}
+
+    // Vibration length
+    internal val VIBRATE_LENGTH: Long = 1000
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         val npSecond = findViewById<NumberPicker>(R.id.countdown_second)
         initializeTimer(npSecond, MIN_VAL, MAX_SECOND, minuteArray)
         changeKeyboardType(npSecond)
+
     }
 
     /**
@@ -64,27 +74,13 @@ class MainActivity : AppCompatActivity() {
      *
      * @param np the NumberPicker
      */
+    @RequiresApi(Build.VERSION_CODES.CUPCAKE)
     private fun changeKeyboardType(np: NumberPicker): Unit {
-        // Set keyboard
+        // Set keyboard to display only numbers instead of full keyboard
         val input = findInput(np)
         if (input != null) {
             input.inputType = InputType.TYPE_CLASS_NUMBER
         }
-    }
-
-    // Code taken from Alan Moore at
-    // https://stackoverflow.com/questions/18794265/restricting-android-numberpicker-to-numeric-keyboard-for-numeric-input-not-alph
-    private fun findInput(np: ViewGroup): EditText? {
-        val count = np.childCount
-        for (i in 0 until count) {
-            val child: View = np.getChildAt(i)
-            if (child is ViewGroup) {
-                findInput(child as ViewGroup)
-            } else if (child is EditText) {
-                return child
-            }
-        }
-        return null
     }
 
     /**
@@ -102,7 +98,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun onPressStart() {
+    fun onPressStart(view: View) {
+        val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        // Vibrate for 500 milliseconds
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            v.vibrate(VibrationEffect.createOneShot(VIBRATE_LENGTH, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else { //deprecated in API 26
+            v.vibrate(VIBRATE_LENGTH)
+        }
+    }
 
+    // Code taken from Alan Moore at
+    // https://stackoverflow.com/questions/18794265/restricting-android-numberpicker-to-numeric-keyboard-for-numeric-input-not-alph
+    private fun findInput(np: ViewGroup): EditText? {
+        val count = np.childCount
+        for (i in 0 until count) {
+            val child: View = np.getChildAt(i)
+            if (child is ViewGroup) {
+                findInput(child as ViewGroup)
+            } else if (child is EditText) {
+                return child
+            }
+        }
+        return null
     }
 }
+
+
