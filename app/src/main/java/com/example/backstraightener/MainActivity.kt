@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
         // Seconds
         val npSecond = findViewById<NumberPicker>(R.id.countdown_second)
-        initializeTimer(npSecond, MIN_VAL, MAX_SECOND, minuteArray)
+        initializeTimer(npSecond, MIN_VAL, MAX_SECOND, secondArray)
         changeKeyboardType(npSecond)
 
     }
@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
      * @param np the NumberPicker
      */
     @RequiresApi(Build.VERSION_CODES.CUPCAKE)
-    private fun changeKeyboardType(np: NumberPicker): Unit {
+    private fun changeKeyboardType(np: NumberPicker) {
         // Set keyboard to display only numbers instead of full keyboard
         val input = findInput(np)
         if (input != null) {
@@ -98,7 +98,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Runs whenever the start button on the app is pressed
+     *
+     * @param view the button
+     */
     fun onPressStart(view: View) {
+        vibratePhone()
+    }
+
+    /**
+     * Vibrates the phone
+     *
+     */
+    fun vibratePhone() {
         val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         // Vibrate for 500 milliseconds
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
