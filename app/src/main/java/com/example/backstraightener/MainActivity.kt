@@ -28,20 +28,21 @@ class MainActivity : AppCompatActivity() {
     // Vibration length
     internal val VIBRATE_LENGTH: Long = 1000
 
-    // Other objects
+    // Number pickers
     internal lateinit var npHour: NumberPicker
     internal lateinit var npMinute: NumberPicker
     internal lateinit var  npSecond: NumberPicker
 
+    // Countdown timer and values
     internal lateinit var countDownTimer: CountDownTimer
     internal var countdownStartTime: Long = 6000
     internal val countdownInterval: Long = 1000
 
+    // Whether start button was pressed or not
     internal var startPressed: Boolean = false
 
-    var secondPicked = 0
-
-
+    // Value of the second picked
+    var secondPicked: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +63,7 @@ class MainActivity : AppCompatActivity() {
         initializeTimer(npSecond, MIN_VAL, MAX_SECOND, secondArray)
         changeKeyboardType(npSecond)
         npSecond.setOnValueChangedListener { picker, oldVal, newVal ->
-            secondPicked = newVal
+            secondPicked = newVal.toLong()
         }
     }
 
@@ -115,15 +116,12 @@ class MainActivity : AppCompatActivity() {
      * Resets the timer
      *
      */
-    fun resetTimer() {
-
+    private fun resetTimer() {
         countdownStartTime = convertTimeToMillis(npHour.value, "hour") +
                 convertTimeToMillis(npMinute.value, "minute") +
                 convertTimeToMillis(npSecond.value, "second")
 
-        val test = convertTimeToMillis(secondPicked, "second")
-
-        countDownTimer = object: CountDownTimer(test, 1000) {
+        countDownTimer = object: CountDownTimer(countdownStartTime, 1000) {
             override fun onTick(p0: Long) {
                 npSecond.isEnabled = false
                 val timeRemaining = p0 / 1000
@@ -133,15 +131,18 @@ class MainActivity : AppCompatActivity() {
             override fun onFinish() {
                 npSecond.isEnabled = true
                 vibratePhone()
+                startPressed = false
             }
         }
-
-        startPressed = false
     }
 
+    /**
+     * Start the timer, set startPressed to true
+     *
+     */
     fun startTimer() {
-        countDownTimer.start()
         startPressed = true
+        countDownTimer.start()
     }
 
     /**
