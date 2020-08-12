@@ -24,13 +24,13 @@ class MainActivity : AppCompatActivity() {
     // Number pickers
     private lateinit var npHour: NumberPicker
     private lateinit var npMinute: NumberPicker
-    private lateinit var  npSecond: NumberPicker
+    private lateinit var npSecond: NumberPicker
 
     // Arrays for number pickers
     private val dec = DecimalFormat("00")
-    private val hoursArray = Array(MAX_HOUR) {i -> dec.format(i)}
-    private val minuteArray = Array(MAX_MINUTE) {i -> dec.format(i)}
-    private val secondArray = Array(MAX_SECOND) {i -> dec.format(i)}
+    private val hoursArray = Array(MAX_HOUR) { i -> dec.format(i) }
+    private val minuteArray = Array(MAX_MINUTE) { i -> dec.format(i) }
+    private val secondArray = Array(MAX_SECOND) { i -> dec.format(i) }
 
     // Countdown timer and values
     private lateinit var countDownTimer: CountDownTimer
@@ -41,8 +41,11 @@ class MainActivity : AppCompatActivity() {
     private var startPressed: Boolean = false
 
     // Value of the second picked
-    private var secondPicked: Long = 0
+    private var hourPicked: Int = 0
+    private var minutePicked: Int = 0
+    private var secondPicked: Int = 0
 
+    @RequiresApi(Build.VERSION_CODES.CUPCAKE)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -51,18 +54,24 @@ class MainActivity : AppCompatActivity() {
         npHour = findViewById<NumberPicker>(R.id.countdown_hour)
         initializeTimer(npHour, MIN_VAL, MAX_HOUR, hoursArray)
         changeKeyboardType(npHour)
+        npHour.setOnValueChangedListener { picker, oldVal, newVal ->
+            hourPicked = newVal
+        }
 
         // Minutes
         npMinute = findViewById<NumberPicker>(R.id.countdown_minute)
         initializeTimer(npMinute, MIN_VAL, MAX_MINUTE, minuteArray)
         changeKeyboardType(npMinute)
+        npMinute.setOnValueChangedListener { picker, oldVal, newVal ->
+            minutePicked = newVal
+        }
 
         // Seconds
         npSecond = findViewById<NumberPicker>(R.id.countdown_second)
         initializeTimer(npSecond, MIN_VAL, MAX_SECOND, secondArray)
         changeKeyboardType(npSecond)
         npSecond.setOnValueChangedListener { picker, oldVal, newVal ->
-            secondPicked = newVal.toLong()
+            secondPicked = newVal
         }
     }
 
@@ -74,7 +83,12 @@ class MainActivity : AppCompatActivity() {
      * @param maxVal the maximum value of the picker
      * @param values the array of values that will displayed in the picker
      */
-    private fun initializeTimer(np: NumberPicker, minVal: Int, maxVal: Int, values: Array<String>): Unit {
+    private fun initializeTimer(
+        np: NumberPicker,
+        minVal: Int,
+        maxVal: Int,
+        values: Array<String>
+    ): Unit {
         // Set values
         np.minValue = minVal
         np.maxValue = maxVal - 1
@@ -104,8 +118,8 @@ class MainActivity : AppCompatActivity() {
      * @return Long
      */
     private fun convertTimeToMillis(timeLength: Int, timeUnit: String): Long {
-        when(timeUnit) {
-            "hour" ->  return timeLength.toLong() * 3600000
+        when (timeUnit) {
+            "hour" -> return timeLength.toLong() * 3600000
             "minute" -> return timeLength.toLong() * 60000
             else -> return timeLength.toLong() * 1000
         }
@@ -115,14 +129,14 @@ class MainActivity : AppCompatActivity() {
      * Resets the timer
      *
      */
-    private fun resetTimer() {
+    private fun setupTimer() {
         // Get the time requested by the user in milliseconds
         countdownStartTime = convertTimeToMillis(npHour.value, "hour") +
                 convertTimeToMillis(npMinute.value, "minute") +
                 convertTimeToMillis(npSecond.value, "second")
 
         // Countdown timer
-        countDownTimer = object: CountDownTimer(countdownStartTime, countdownInterval) {
+        countDownTimer = object : CountDownTimer(countdownStartTime, countdownInterval) {
             override fun onTick(p0: Long) {
                 // Disable interaction with the number picker
                 npHour.isEnabled = false
@@ -132,28 +146,39 @@ class MainActivity : AppCompatActivity() {
                 // Count down
                 val timeRemaining = p0 / countdownInterval
 
-                if (timeRemaining % 360 == 359L && npHour.value > 0) {
+                // Tick down hours
+                if (timeRemaining % 3600 == 3599L) {
                     npHour.value--
                 }
-                if (timeRemaining % 60 == 59L && (npMinute.value > 0 || npHour.value > 0)) {
+
+                // Tick down minutes
+                if (timeRemaining % 60 == 59L) {
                     npMinute.value--
                 }
+
+                // Tick down seconds
                 if (timeRemaining % 1 == 0L) {
                     npSecond.value--
                 }
             }
 
             override fun onFinish() {
-                // Re-enable interaction with the number picker
-                npHour.isEnabled = true
-                npMinute.isEnabled = true
-                npSecond.isEnabled = true
-
                 // Vibrate the phone
                 vibratePhone()
 
-                // startPressed reset to false
-                startPressed = false
+                // In case start pressed when all values are 0
+                if(hourPicked == 0 && minutePicked == 0 && secondPicked == 0) {
+                    startPressed = false
+                    return
+                }
+
+                // Reset values
+                npHour.value = hourPicked
+                npMinute.value = minutePicked
+                npSecond.value = secondPicked
+
+                // Restart
+                countDownTimer.start()
             }
         }
     }
@@ -162,7 +187,7 @@ class MainActivity : AppCompatActivity() {
      * Start the timer, set startPressed to true
      *
      */
-    fun startTimer() {
+    private fun startTimer() {
         // Start has been pressed
         startPressed = true
 
@@ -177,11 +202,40 @@ class MainActivity : AppCompatActivity() {
      */
     fun onPressStart(view: View) {
         // Reset the timer
-        resetTimer()
+        setupTimer()
 
         // If start hasn't been pressed already, start the timer
-        if (!startPressed){
+        if (!startPressed) {
             startTimer()
+        }
+    }
+
+    /**
+     * Cancel timer
+     *
+     * @param view the button
+     */
+    fun onPressCancel(view: View) {
+        if (startPressed) {
+            // Start no longer pressed
+            startPressed = false
+
+            // Reset to default values
+            npHour.value = 0
+            npMinute.value = 0
+            npSecond.value = 0
+
+            hourPicked = 0
+            minutePicked = 0
+            secondPicked = 0
+
+            // Make interactable again
+            npHour.isEnabled = true
+            npMinute.isEnabled = true
+            npSecond.isEnabled = true
+
+            // Stop timer
+            countDownTimer.cancel()
         }
     }
 
@@ -189,14 +243,19 @@ class MainActivity : AppCompatActivity() {
      * Vibrates the phone
      *
      */
-    fun vibratePhone() {
-        val timings: LongArray= longArrayOf(0, 1000)
+    private fun vibratePhone() {
+        val timings: LongArray = longArrayOf(0, 1000)
         val amplitudes: IntArray = intArrayOf(0, 255)
 
         val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         // Vibrate for 1000 milliseconds
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            v.vibrate(VibrationEffect.createOneShot(VIBRATE_LENGTH, VibrationEffect.DEFAULT_AMPLITUDE))
+            v.vibrate(
+                VibrationEffect.createOneShot(
+                    VIBRATE_LENGTH,
+                    VibrationEffect.DEFAULT_AMPLITUDE
+                )
+            )
         } else { //deprecated in API 26
             v.vibrate(VIBRATE_LENGTH)
         }

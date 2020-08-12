@@ -18,6 +18,7 @@
             android:id="@+id/countdown_hour"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
             android:theme="@style/NumberPickerText"
             android:layout_marginRight="20dp" />
 
@@ -31,9 +32,9 @@
             android:id="@+id/countdown_minute"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:theme="@style/NumberPickerText"
+            android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
-            android:layout_marginLeft="20dp" />
+            android:theme="@style/NumberPickerText" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -45,19 +46,35 @@
             android:id="@+id/countdown_second"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:theme="@style/NumberPickerText"
-            android:layout_marginRight="20dp"
-            android:layout_marginLeft="20dp" />
+            android:layout_marginStart="20dp"
+            android:layout_marginLeft="20dp"
+            android:theme="@style/NumberPickerText" />
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/countdown_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <LinearLayout
+        android:id="@+id/buttons"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_below="@id/countdown_full"
-        android:layout_centerHorizontal="true"
-        android:onClick="onPressStart"
-        android:text="@string/start_button" />
+        android:gravity="center_horizontal">
+
+        <Button
+            android:id="@+id/button_start"
+            android:layout_marginEnd="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onPressStart"
+            android:text="@string/button_start" />
+
+        <Button
+            android:id="@+id/button_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onPressCancel"
+            android:text="@string/button_cancel"
+            />
+    </LinearLayout>
 
 </RelativeLayout>
