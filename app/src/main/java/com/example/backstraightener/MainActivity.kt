@@ -11,38 +11,37 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import java.text.DecimalFormat
 
+// Timer wheel values
+private const val MIN_VAL = 0
+private const val MAX_HOUR = 100
+private const val MAX_MINUTE = 60
+private const val MAX_SECOND = 60
+
+// Vibration length
+private const val VIBRATE_LENGTH: Long = 1000
 
 class MainActivity : AppCompatActivity() {
-
-    // Timer wheel values
-    internal val MIN_VAL = 0
-    internal val MAX_HOUR = 100
-    internal val MAX_MINUTE = 60
-    internal val MAX_SECOND = 60
-
-    internal val dec = DecimalFormat("00")
-    internal val hoursArray = Array(MAX_HOUR) {i -> dec.format(i)}
-    internal val minuteArray = Array(MAX_MINUTE) {i -> dec.format(i)}
-    internal val secondArray = Array(MAX_SECOND) {i -> dec.format(i)}
-
-    // Vibration length
-    internal val VIBRATE_LENGTH: Long = 1000
-
     // Number pickers
-    internal lateinit var npHour: NumberPicker
-    internal lateinit var npMinute: NumberPicker
-    internal lateinit var  npSecond: NumberPicker
+    private lateinit var npHour: NumberPicker
+    private lateinit var npMinute: NumberPicker
+    private lateinit var  npSecond: NumberPicker
+
+    // Arrays for number pickers
+    private val dec = DecimalFormat("00")
+    private val hoursArray = Array(MAX_HOUR) {i -> dec.format(i)}
+    private val minuteArray = Array(MAX_MINUTE) {i -> dec.format(i)}
+    private val secondArray = Array(MAX_SECOND) {i -> dec.format(i)}
 
     // Countdown timer and values
-    internal lateinit var countDownTimer: CountDownTimer
-    internal var countdownStartTime: Long = 6000
-    internal val countdownInterval: Long = 1000
+    private lateinit var countDownTimer: CountDownTimer
+    private var countdownStartTime: Long = 6000
+    private val countdownInterval: Long = 1000
 
     // Whether start button was pressed or not
-    internal var startPressed: Boolean = false
+    private var startPressed: Boolean = false
 
     // Value of the second picked
-    var secondPicked: Long = 0
+    private var secondPicked: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,20 +116,43 @@ class MainActivity : AppCompatActivity() {
      *
      */
     private fun resetTimer() {
+        // Get the time requested by the user in milliseconds
         countdownStartTime = convertTimeToMillis(npHour.value, "hour") +
                 convertTimeToMillis(npMinute.value, "minute") +
                 convertTimeToMillis(npSecond.value, "second")
 
-        countDownTimer = object: CountDownTimer(countdownStartTime, 1000) {
+        // Countdown timer
+        countDownTimer = object: CountDownTimer(countdownStartTime, countdownInterval) {
             override fun onTick(p0: Long) {
+                // Disable interaction with the number picker
+                npHour.isEnabled = false
+                npMinute.isEnabled = false
                 npSecond.isEnabled = false
-                val timeRemaining = p0 / 1000
-                npSecond.value = timeRemaining.toInt()
+
+                // Count down
+                val timeRemaining = p0 / countdownInterval
+
+                if (timeRemaining % 360 == 359L && npHour.value > 0) {
+                    npHour.value--
+                }
+                if (timeRemaining % 60 == 59L && (npMinute.value > 0 || npHour.value > 0)) {
+                    npMinute.value--
+                }
+                if (timeRemaining % 1 == 0L) {
+                    npSecond.value--
+                }
             }
 
             override fun onFinish() {
+                // Re-enable interaction with the number picker
+                npHour.isEnabled = true
+                npMinute.isEnabled = true
                 npSecond.isEnabled = true
+
+                // Vibrate the phone
                 vibratePhone()
+
+                // startPressed reset to false
                 startPressed = false
             }
         }
@@ -141,7 +163,10 @@ class MainActivity : AppCompatActivity() {
      *
      */
     fun startTimer() {
+        // Start has been pressed
         startPressed = true
+
+        // START THE TIMER, KRONK
         countDownTimer.start()
     }
 
@@ -151,8 +176,10 @@ class MainActivity : AppCompatActivity() {
      * @param view the button
      */
     fun onPressStart(view: View) {
+        // Reset the timer
         resetTimer()
 
+        // If start hasn't been pressed already, start the timer
         if (!startPressed){
             startTimer()
         }
@@ -163,8 +190,11 @@ class MainActivity : AppCompatActivity() {
      *
      */
     fun vibratePhone() {
+        val timings: LongArray= longArrayOf(0, 1000)
+        val amplitudes: IntArray = intArrayOf(0, 255)
+
         val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        // Vibrate for 500 milliseconds
+        // Vibrate for 1000 milliseconds
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             v.vibrate(VibrationEffect.createOneShot(VIBRATE_LENGTH, VibrationEffect.DEFAULT_AMPLITUDE))
         } else { //deprecated in API 26
